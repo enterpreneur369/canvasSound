@@ -1,0 +1,211 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>CANVAS Memoria de sonidos</title>
+<style>
+body{
+	width:960px;
+	margin:0 auto;
+}
+h1{
+	text-align:center;
+}
+#miCanvas{
+	border:dotted 2px yellow;
+	background:green;	
+}
+</style>
+<script>
+/***************
+VARIABLES
+****************/
+var ctx, canvas;
+var squareW = 150;
+var squareH = 150;
+var beginX = 50;
+var beginY = 100;
+var margin = 30;
+var frame = 10;
+var squares_array = new Array();
+var colors_array = new Array("red", "yellow", "blue", "purple", "cyan");
+var numSquares = colors_array.length;
+var square;
+var secuence_array = new Array();
+var repeatSecuence = true;
+var n,m;
+/****************
+OBJETCS
+*****************/
+function square(x, y, w, h, note, color){
+	this.x = x;
+	this.y = y;
+	this.w = w;
+	this.h = h;
+	this.note = note;
+	this.color = color;
+	this.draw = drawsquare;
+	this.drawBig = drawsquareBig;	
+}
+function drawsquare(){
+	ctx.save();
+	ctx.fillStyle = this.color;
+	ctx.clearRect(this.x-frame, this.y-frame, this.w+frame*2, this.h+frame*2);
+	ctx.fillRect(this.x, this.y, this.w, this.h);
+	ctx.restore();	
+}
+function drawsquareBig(){
+	ctx.save();
+	ctx.fillStyle = this.color;
+	ctx.clearRect(this.x-frame, this.y-frame, this.w+frame*2, this.h+frame*2);
+	ctx.fillRect(this.x-frame, this.y-frame, this.w+frame*2, this.h+frame*2);
+	ctx.restore();	
+}
+/****************
+FUNCTIONS
+*****************/
+function creasquares(){
+	for(var i = 0; i<numSquares; i++){
+		squares_array.push(new square(beginX+(squareW+margin)*i, 
+		beginY, 
+		squareW, 
+		squareH, 
+		i, 
+		colors_array[i]));
+		//
+		squares_array[i].draw();
+	}
+}
+function adjust(xx, yy){
+	var pos = canvas.getBoundingClientRect();
+	var x = xx - pos.left;
+	var y = yy - pos.top;
+	return	{x:x, y:y}
+}
+function select(e){
+	var pos = adjust(e.clientX, e.clientY);
+	var x = pos.x;
+	var y = pos.y;	
+	//
+	for(var i=0; i<numSquares; i++){
+		square = squares_array[i];
+		if((x > square.x)&&(x < square.x+square.w)&&(y > square.y)&&(y < square.y+square.h)){
+			break;	
+		}
+	}
+	if(i<numSquares){
+		if(i==secuence_array[m]){
+			playNote(i);
+		} else {
+			gameOver();
+		}
+	}
+}
+function playNote(i){
+	if(i==0) note1.play();
+	if(i==1) note2.play();
+	if(i==2) note3.play();
+	if(i==3) note4.play();
+	if(i==4) note5.play();
+	square = squares_array[i];
+	square.drawBig();
+	setTimeout(comeback,600);	
+}
+function comeback(){
+	square.draw();
+	if(repeatSecuence){
+		setTimeout(secuencia,600);
+	} else {
+		m++;
+		if(m==secuence_array.length){
+			mensaje("Muy bien, tienes "+m+" puntos");
+			m = 0;
+			setTimeout(createSecuence,1200);	
+		}
+	}
+}
+function mensaje(cadena){
+	var lon = (canvas.width-(18*cadena.length))/2;
+	ctx.save();
+	ctx.fillStyle = "black";	
+	ctx.clearRect(0,280,canvas.width,100);
+	ctx.font = "bold 30px Courier";
+	ctx.fillText(cadena, lon, 310);
+	ctx.restore();
+}
+function createSecuence(){
+	mensaje("Observa la secuencia de la computadora");
+	canvas.removeEventListener("click",select,false);
+	repeatSecuence = true;
+	secuence_array.push(Math.floor(Math.random()*numSquares));
+	n = -1;
+	setTimeout(secuencia,500);	
+}
+function secuencia(){
+	n++;
+	if(n==secuence_array.length){
+		n = 0;
+		m = 0;
+		repeatSecuence = false;
+		mensaje("Ahora repite la secuencia");
+		canvas.addEventListener("click", select, false);
+	} else {
+		playNote(secuence_array[n]);	
+	}
+}
+function gameOver(){
+	mensaje("Fin del juego, obtuviste "+
+	secuence_array.length+" puntos");
+	fin.play();
+	canvas.removeEventListener("click", select, false);
+}
+/****************
+INICIO
+*****************/
+window.onload = function(){
+	canvas = document.getElementById("miCanvas");
+	if(canvas && canvas.getContext){
+		ctx = canvas.getContext("2d");
+		if(ctx){
+			var note1 = document.getElementById("note1");
+			var note2 = document.getElementById("note2");
+			var note3 = document.getElementById("note3");
+			var note4 = document.getElementById("note4");
+			var note5 = document.getElementById("createSecuence5");
+			var fin = document.getElementById("fin");
+			//
+			creasquares();
+			createSecuence();
+		} else {
+			alert("Error al crear tu contexto");	
+		}
+	}
+}
+</script>
+</head>
+
+<body>
+<h1>CANVAS Memoria de sonido</h1>
+<canvas id="miCanvas" width="960px" height="500px">
+Tu navegador no soporta CANVAS
+</canvas>
+<audio id="note1">
+<source muted="true" src="./sonidos/note1.ogg">
+</audio>
+<audio id="note2">
+<sourc muted="true" src="./sonidos/note2.mp3">
+</audio>
+<audio id="note3">
+<source muted="true" src="./sonidos/note3.wav">
+</audio>
+<audio id="note4">
+<source muted="true" src="./sonidos/note4.wav">
+</audio>
+<audio id="note5">
+<source muted="true" src="./sonidos/note5.wav">
+</audio>
+<audio id="fin">
+<source muted="true" src="./sonidos/error.wav">
+</audio>
+</body>
+</html>
